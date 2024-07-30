@@ -4,6 +4,7 @@ import { SelectedResolution } from "../ResolutionSelector.js";
 import { Utils } from "../Utils.js";
 import Text from "../ui/Text.js";
 import Button from "../ui/Button.js";
+import { SoundManager } from "../SoundManager.js";
 
 export default class GameScene extends Phaser.Scene {
 
@@ -50,8 +51,8 @@ export default class GameScene extends Phaser.Scene {
         );
     };
     OnPlayButtonClicked() {
+        SoundManager.ButtonClickSound();
         this.playButtonText.TextScaleTween();
-        console.log("Play buttn");
         this.SpinWheel();
     };
     ResizePlayButton(newWidth, newHeight, newScale) {
@@ -61,7 +62,6 @@ export default class GameScene extends Phaser.Scene {
         this.playButtonText.setScale(newScale);
         this.playButtonText.setPosition(this.playButton.x, this.playButton.y);
     };
-
 
     CreateWheel() {
         this.wheel = this.add.sprite(0, 0, "wheel");
@@ -84,8 +84,11 @@ export default class GameScene extends Phaser.Scene {
 
     SpinWheel() {
         if (this.canSpin) {
-            this.prizeAmountText.setText("");
+            SoundManager.PlayWheelSound();
             this.canSpin = false;
+            this.playButton.disable();
+            this.playButtonText.disable();
+            this.prizeAmountText.setText("");
 
             const rounds = Phaser.Math.Between(3, 5); // Number of rounds to spin
             const degrees = Phaser.Math.Between(0, 360); // Degrees to rotate
@@ -99,13 +102,25 @@ export default class GameScene extends Phaser.Scene {
 
             this.tweens.add({
                 targets: [this.wheel],
+                delay: 200,
                 angle: totalAngle - stopAngle,
                 duration: Constant.rotationTime,
                 ease: "Cubic.easeOut",
                 callbackScope: this,
                 onComplete: function (tween) {
+                    SoundManager.StopWheelSound();
                     this.prizeAmountText.setText(Constant.slicePrizes[segmentIndex]);
-                    this.canSpin = true;
+                    if (Constant.slicePrizes[segmentIndex] == "BAD LUCK!!!") {
+                        SoundManager.PlayLooseSound();
+                    } else {
+                        SoundManager.PlayWinSound();
+                    }
+                    setTimeout(() => {
+                        this.canSpin = true;
+                        this.playButton.enable();
+                        this.playButtonText.enable();
+                    }, 300);
+
                 }
             });
         }

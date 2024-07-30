@@ -12,8 +12,6 @@ module.exports = {
             patterns: [
                 { from: "src/assets", to: "assets" },
                 { from: 'src/style.css', to: path.resolve(__dirname, 'dist') },
-                { from: 'src/rexscrollerplugin.min.js', to: path.resolve(__dirname, 'dist') },
-                { from: 'src/SpinePlugin.min.js', to: path.resolve(__dirname, 'dist') },
             ],
         }),
         new HtmlWebpackPlugin({ template: './src/index.html' })

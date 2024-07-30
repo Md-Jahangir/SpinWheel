@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import FontFaceObserver from "fontfaceobserver";
 import { Utils } from "../Utils.js";
 import { SelectedResolution } from "../ResolutionSelector.js";
+import { SoundManager } from "../SoundManager.js"
 import { Server } from "../services/Server.js";
 
 export default class PreloadScene extends Phaser.Scene {
@@ -33,7 +34,12 @@ export default class PreloadScene extends Phaser.Scene {
         ];
 
         this.audioFiles = [
-            // { name: 'card', path: 'assets/sounds/card.mp3' },
+            { name: 'bg_sound', path: 'assets/sounds/signal_button.mp3' },
+            { name: 'button_sound', path: 'assets/sounds/signal_button.mp3' },
+            { name: 'loose_sound', path: 'assets/sounds/loose.mp3' },
+            { name: 'win_sound', path: 'assets/sounds/win.mp3' },
+            { name: 'wheel_sound', path: 'assets/sounds/wheel_sound.mp3' },
+
         ];
     }
 
@@ -118,6 +124,7 @@ export default class PreloadScene extends Phaser.Scene {
     }
 
     OnComplete() {
+        SoundManager.CreateSound(this.scene);
         setTimeout(() => {
             this.scene.stop('PreloadScene');
             this.scene.start("GameScene");
