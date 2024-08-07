@@ -10,7 +10,10 @@ export default class GameScene extends Phaser.Scene {
 
     constructor() {
         super("GameScene");
-
+        this.numOfPrizes = null;
+        this.angleStep = null;
+        this.prizesTextArray = [];
+        this.prizesDataArray = [];
     };
 
     init() { };
@@ -64,9 +67,32 @@ export default class GameScene extends Phaser.Scene {
     };
 
     CreateWheel() {
+        this.numOfPrizes = Constant.slicePrizes.length;
+        this.angleStep = 360 / this.numOfPrizes;
+        this.prizesTextArray = [];
+
         this.wheel = this.add.sprite(0, 0, "wheel");
         this.pin = this.add.sprite(0, 0, "pin");
-        this.pin.flipY = true;
+        // this.pin.flipY = true;
+
+        for (let i = 0; i < this.numOfPrizes; i++) {
+            this.prizeText = this.add.text(
+                this.wheel.x,
+                this.wheel.y,
+                Constant.slicePrizes[i],
+                {
+                    fontFamily: 'BAHNSCHRIFT',
+                    fontSize: '22px',
+                    fontStyle: 'bold',
+                    color: '#ffffff',
+                    align: 'center',
+                },
+
+            );
+            this.prizeText.setOrigin(0.5);
+            this.prizesTextArray.push(this.prizeText);
+        }
+
         this.prizeAmountText = new Text(this, 0, 0, {
             text: "Your prize",
             fontFamily: "BAHNSCHRIFT",
@@ -81,6 +107,17 @@ export default class GameScene extends Phaser.Scene {
 
         this.canSpin = true;
     };
+
+    updatePrizesTextPositions() {
+        const wheelAngle = Phaser.Math.DegToRad(this.wheel.angle);
+        this.prizesTextArray.forEach((prizeText, index) => {
+            const data = this.prizesDataArray[index];
+            const x = this.wheel.x + data.radius * Math.cos(data.angle + wheelAngle);
+            const y = this.wheel.y + data.radius * Math.sin(data.angle + wheelAngle);
+            prizeText.setPosition(x, y);
+            prizeText.setRotation(data.angle + wheelAngle + Phaser.Math.DegToRad(90)); // Adjust rotation
+        });
+    }
 
     SpinWheel() {
         if (this.canSpin) {
@@ -107,6 +144,7 @@ export default class GameScene extends Phaser.Scene {
                 duration: Constant.rotationTime,
                 ease: "Cubic.easeOut",
                 callbackScope: this,
+                onUpdate: this.updatePrizesTextPositions,//for dynamic prize text
                 onComplete: function (tween) {
                     SoundManager.StopWheelSound();
                     this.prizeAmountText.setText(Constant.slicePrizes[segmentIndex]);
@@ -132,10 +170,32 @@ export default class GameScene extends Phaser.Scene {
 
         this.pin.setScale(newScale);
         //Top of the wheel
-        this.pin.setPosition(newWidth / 2, newHeight / 2 - 270 * newScale);
+        // this.pin.setPosition(newWidth / 2, newHeight / 2 - 270 * newScale);
 
         //Middle of the wheel
-        // this.pin.setPosition(newWidth / 2, newHeight / 2);
+        this.pin.setPosition(newWidth / 2, newHeight / 2);
+
+        for (let i = 0; i < this.prizesTextArray.length; i++) {
+            this.prizesTextArray[i].setScale(newScale);
+
+            if (i == 0) {
+                this.prizesTextArray[i].setAngle(this.angleStep / 2);
+                this.prizesTextArray[i].setPosition(
+                    this.wheel.x + (this.wheel.width / 2.5) * Math.cos(Phaser.Math.DegToRad(22.5 - 90)) * newScale,
+                    this.wheel.y + (this.wheel.height / 2.5) * Math.sin(Phaser.Math.DegToRad(22.5 - 90)) * newScale
+                );
+            } else {
+                this.prizesTextArray[i].setAngle(i * this.angleStep + this.angleStep / 2);
+                this.prizesTextArray[i].setPosition(
+                    this.wheel.x + (this.wheel.width / 2.5) * Math.cos(Phaser.Math.DegToRad(i * this.angleStep + this.angleStep / 2 - 90)) * newScale,
+                    this.wheel.y + (this.wheel.height / 2.5) * Math.sin(Phaser.Math.DegToRad(i * this.angleStep + this.angleStep / 2 - 90)) * newScale
+                );
+            }
+
+            const angle = Phaser.Math.DegToRad(i * this.angleStep + this.angleStep / 2 - 90);
+            const radius = (this.wheel.width / 2.5) * newScale;
+            this.prizesDataArray.push({ angle: angle, radius: radius });
+        }
 
         this.prizeAmountText.setScale(newScale);
         this.prizeAmountText.setPosition(newWidth / 2, newHeight / 2 - 350 * newScale);
@@ -147,6 +207,7 @@ export default class GameScene extends Phaser.Scene {
         this.ResizeGamePlayBg(newWidth, newHeight);
         this.ResizePlayButton(newWidth, newHeight, newScale);
         this.ResizeWheel(newWidth, newHeight, newScale);
+
     };
 
     //########################################################################################
